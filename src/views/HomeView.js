@@ -1,5 +1,21 @@
-// View: Home Screen
-// Pantalla inicial que muestra la información del candidato
+/**
+ * HomeView - Vista principal del perfil del candidato
+ * 
+ * Vista 1: Pantalla inicial que muestra la información profesional del candidato,
+ * incluyendo datos personales, descripción profesional y habilidades técnicas.
+ * Incluye funcionalidad de cambio de tema (modo claro/oscuro) con persistencia.
+ * 
+ * @component
+ * @module views/HomeView
+ * @author Francis Daniel Mamani Silva
+ * @version 1.0.0
+ * 
+ * @returns {React.Component} Componente de vista del perfil del candidato
+ * 
+ * @example
+ * // Uso en navegación
+ * <Tab.Screen name="Inicio" component={HomeView} />
+ */
 
 import React, { useState, useEffect } from 'react';
 import {
@@ -9,20 +25,35 @@ import {
   ScrollView,
   Image,
   StatusBar,
-  SafeAreaView,
   TouchableOpacity,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import CandidateController from '../controllers/CandidateController';
 import { useTheme } from '../context/ThemeContext';
 
+/**
+ * Componente funcional que renderiza el perfil del candidato
+ * 
+ * Características:
+ * - Obtiene datos del candidato a través del CandidateController
+ * - Soporta tema dinámico (claro/oscuro) mediante ThemeContext
+ * - Muestra avatar, información personal, descripción profesional y habilidades
+ * - Header con gradiente personalizado y botón de cambio de tema
+ * - Layout responsivo con ScrollView para contenido extenso
+ * 
+ * @function
+ */
 const HomeView = () => {
   const { theme, isDarkMode, toggleTheme } = useTheme();
   const [candidateData, setCandidateData] = useState(null);
 
+  /**
+   * Efecto que carga los datos del candidato al montar el componente
+   * Utiliza el patrón MVC a través del CandidateController
+   */
   useEffect(() => {
-    // Obtener datos del candidato a través del controlador
     const data = CandidateController.getCandidateInfo();
     setCandidateData(data);
   }, []);

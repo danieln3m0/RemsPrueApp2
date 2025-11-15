@@ -1,5 +1,26 @@
-// View: Formulario de Creación de Tablero
-// Vista 3: Formulario para crear un nuevo tablero eléctrico
+/**
+ * CreateTableroView - Vista de creación de tableros eléctricos
+ * 
+ * Vista 3: Formulario completo para crear nuevos tableros eléctricos.
+ * Incluye validación de campos, integración con React Query para crear registros,
+ * animación de header que se oculta al hacer scroll, y soporte para tema dinámico.
+ * Al completarse exitosamente, redirige automáticamente a la lista de tableros.
+ * 
+ * @component
+ * @module views/CreateTableroView
+ * @author Francis Daniel Mamani Silva
+ * @version 1.0.0
+ * 
+ * @param {Object} props - Props del componente
+ * @param {Object} props.navigation - Objeto de navegación de React Navigation
+ * @param {Function} props.navigation.navigate - Función para navegar entre pantallas
+ * 
+ * @returns {React.Component} Formulario de creación de tablero
+ * 
+ * @example
+ * // Uso en tab navigator
+ * <Tab.Screen name="Crear" component={CreateTableroView} />
+ */
 
 import React, { useState, useRef } from 'react';
 import {
@@ -20,20 +41,50 @@ import { Picker } from '@react-native-picker/picker';
 import { useTheme } from '../context/ThemeContext';
 import { useCreateTablero } from '../hooks/useTableros';
 
+/**
+ * Componente funcional del formulario de creación de tableros
+ * 
+ * Características:
+ * - Formulario con validación de todos los campos requeridos
+ * - React Query mutation para crear tableros con caché automático
+ * - Header animado que se oculta/muestra al hacer scroll
+ * - Tema dinámico (claro/oscuro)
+ * - Valores predeterminados para años (año actual)
+ * - Estado predeterminado: "Operativo"
+ * - Indicador de carga durante envío (ActivityIndicator)
+ * - Navegación automática al Dashboard después de crear
+ * - Botón de limpiar formulario con confirmación
+ * 
+ * @function
+ */
 const CreateTableroView = ({ navigation }) => {
   const { theme, isDarkMode, toggleTheme } = useTheme();
+  
+  /** React Query mutation hook para crear tableros */
   const createTableroMutation = useCreateTablero();
   
-  // Animación para ocultar/mostrar header
+  /** Animated.Value para controlar la animación del header */
   const scrollY = useRef(new Animated.Value(0)).current;
   const headerHeight = 80;
   
+  /** Interpolación para translateY del header animado */
   const headerTranslateY = scrollY.interpolate({
     inputRange: [0, headerHeight],
     outputRange: [0, -headerHeight],
     extrapolate: 'clamp',
   });
   
+  /**
+   * Estado del formulario con valores iniciales
+   * @type {Object}
+   * @property {string} nombre - Nombre del tablero
+   * @property {string} ubicacion - Ubicación física del tablero
+   * @property {string} marca - Marca del fabricante
+   * @property {string} capacidad_amperios - Capacidad en amperios (como string para input)
+   * @property {string} ano_fabricacion - Año de fabricación
+   * @property {string} ano_instalacion - Año de instalación
+   * @property {string} estado - Estado actual (Operativo, Mantenimiento, Fuera de servicio)
+   */
   const [formData, setFormData] = useState({
     nombre: '',
     ubicacion: '',
@@ -44,8 +95,16 @@ const CreateTableroView = ({ navigation }) => {
     estado: 'Operativo',
   });
 
+  /** @const {Array<string>} Opciones disponibles para el estado del tablero */
   const estadoOptions = ['Operativo', 'Mantenimiento', 'Fuera de servicio'];
 
+  /**
+   * Actualiza un campo específico del formulario
+   * 
+   * @function
+   * @param {string} field - Nombre del campo a actualizar
+   * @param {string} value - Nuevo valor para el campo
+   */
   const handleInputChange = (field, value) => {
     setFormData(prev => ({
       ...prev,
@@ -53,8 +112,24 @@ const CreateTableroView = ({ navigation }) => {
     }));
   };
 
+  /**
+   * Maneja el envío del formulario con validación completa
+   * 
+   * Validaciones:
+   * - Nombre: no vacío
+   * - Ubicación: no vacía
+   * - Marca: no vacía
+   * - Capacidad: debe ser un número válido
+   * 
+   * Después de validar, convierte los campos numéricos de string a int,
+   * ejecuta la mutation de React Query, limpia el formulario al completarse
+   * exitosamente, y navega automáticamente al Dashboard.
+   * 
+   * @function
+   * @async
+   */
   const handleSubmit = () => {
-    // Validar que los campos no estén vacíos
+    // Validar campos requeridos
     if (!formData.nombre.trim()) {
       Alert.alert('Error', 'El nombre es requerido');
       return;
@@ -75,7 +150,7 @@ const CreateTableroView = ({ navigation }) => {
       return;
     }
 
-    // Preparar datos para enviar
+    // Preparar datos para API: convertir strings a números
     const dataToSend = {
       ...formData,
       capacidad_amperios: parseInt(formData.capacidad_amperios),
@@ -83,6 +158,7 @@ const CreateTableroView = ({ navigation }) => {
       ano_instalacion: parseInt(formData.ano_instalacion),
     };
 
+    // Ejecutar mutation con callbacks de éxito/error
     createTableroMutation.mutate(dataToSend, {
       onSuccess: () => {
         Alert.alert(
@@ -92,7 +168,7 @@ const CreateTableroView = ({ navigation }) => {
             {
               text: 'OK',
               onPress: () => {
-                // Limpiar formulario
+                // Reiniciar formulario con valores predeterminados
                 setFormData({
                   nombre: '',
                   ubicacion: '',
@@ -116,6 +192,13 @@ const CreateTableroView = ({ navigation }) => {
     });
   };
 
+  /**
+   * Limpia todos los campos del formulario
+   * Muestra un Alert de confirmación antes de resetear los valores.
+   * Restaura los valores predeterminados (año actual, estado "Operativo").
+   * 
+   * @function
+   */
   const handleClear = () => {
     Alert.alert(
       'Limpiar formulario',

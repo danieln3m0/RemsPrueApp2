@@ -1,5 +1,26 @@
-// View: Lista de Tableros (Dashboard)
-// Vista 2: Muestra la lista de tableros con opciones de editar y eliminar
+/**
+ * TablerosListView - Vista de lista de tableros eléctricos
+ * 
+ * Vista 2: Muestra la lista de tableros eléctricos con funcionalidad CRUD completa.
+ * Utiliza React Query para gestión de estado asíncrono y caché automático.
+ * Implementa infinite scroll para paginación (10 items por página),
+ * animación de header que se oculta al hacer scroll, y pull-to-refresh.
+ * 
+ * @component
+ * @module views/TablerosListView
+ * @author Francis Daniel Mamani Silva
+ * @version 1.0.0
+ * 
+ * @param {Object} props - Props del componente
+ * @param {Object} props.navigation - Objeto de navegación de React Navigation
+ * @param {Function} props.navigation.navigate - Función para navegar entre pantallas
+ * 
+ * @returns {React.Component} Vista de lista de tableros con CRUD
+ * 
+ * @example
+ * // Uso en stack navigator
+ * <Stack.Screen name="Tableros" component={TablerosListView} />
+ */
 
 import React, { useState, useCallback, useRef } from 'react';
 import {
@@ -17,20 +38,42 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
 import { useTableros, useDeleteTablero } from '../hooks/useTableros';
 
+/**
+ * Componente funcional principal de la lista de tableros
+ * 
+ * Características:
+ * - React Query para caché y sincronización con el backend
+ * - Infinite scroll con paginación de 10 items por página
+ * - Header animado que se oculta/muestra según el scroll
+ * - Pull-to-refresh para recargar datos
+ * - Tema dinámico (claro/oscuro)
+ * - Confirmación antes de eliminar tableros
+ * - Navegación a vista de edición con datos pre-cargados
+ * 
+ * @function
+ */
 const TablerosListView = ({ navigation }) => {
   const { theme, isDarkMode, toggleTheme } = useTheme();
+  
+  /** @type {Array} Array de tableros mostrados actualmente (con paginación) */
   const [displayedTableros, setDisplayedTableros] = useState([]);
+  
+  /** @type {number} Número de página actual para infinite scroll */
   const [page, setPage] = useState(1);
+  
+  /** @const {number} Número de items a mostrar por página */
   const ITEMS_PER_PAGE = 10;
   
-  // React Query hooks
+  /** React Query hook para obtener tableros con caché automático */
   const { data, isLoading, isError, refetch } = useTableros();
+  
+  /** React Query mutation para eliminar tableros con invalidación de caché */
   const deleteTableroMutation = useDeleteTablero();
   
-  // Extraer tableros del resultado de la API
+  /** Extracción segura de tableros desde la respuesta de la API */
   const tableros = Array.isArray(data) ? data : [];
   
-  // Animación para ocultar/mostrar header
+  /** Animated.Value para controlar la animación del header */
   const scrollY = useRef(new Animated.Value(0)).current;
   const headerHeight = 80;
   
@@ -40,7 +83,10 @@ const TablerosListView = ({ navigation }) => {
     extrapolate: 'clamp',
   });
 
-  // Actualizar items mostrados cuando cambian los datos
+  /**
+   * Efecto que actualiza los items mostrados cuando cambian los datos
+   * Reinicia la paginación mostrando los primeros 10 items al recibir datos nuevos
+   */
   React.useEffect(() => {
     if (!isLoading && tableros && tableros.length > 0) {
       const initial = tableros.slice(0, ITEMS_PER_PAGE);
@@ -51,7 +97,13 @@ const TablerosListView = ({ navigation }) => {
     }
   }, [data, isLoading]);
 
-  // Cargar más items (infinite scroll)
+  /**
+   * Carga más items de la lista (infinite scroll)
+   * Se ejecuta cuando el usuario llega al final de la lista
+   * Agrega los siguientes 10 items al array displayedTableros
+   * 
+   * @function
+   */
   const loadMoreTableros = () => {
     if (!tableros || displayedTableros.length >= tableros.length) return;
 
@@ -64,7 +116,16 @@ const TablerosListView = ({ navigation }) => {
     setPage(nextPage);
   };
 
-  // Manejar eliminación
+  /**
+   * Maneja la eliminación de un tablero
+   * Muestra un Alert de confirmación antes de ejecutar la eliminación.
+   * Utiliza React Query mutation que invalida automáticamente el caché.
+   * 
+   * @function
+   * @param {Object} tablero - Objeto tablero a eliminar
+   * @param {string} tablero.id - ID del tablero
+   * @param {string} tablero.nombre - Nombre del tablero (para mostrar en confirmación)
+   */
   const handleDelete = (tablero) => {
     Alert.alert(
       'Confirmar eliminación',
@@ -89,7 +150,13 @@ const TablerosListView = ({ navigation }) => {
     );
   };
 
-  // Manejar edición
+  /**
+   * Navega a la vista de edición con los datos del tablero
+   * Pasa el objeto tablero completo como parámetro de navegación
+   * 
+   * @function
+   * @param {Object} tablero - Objeto tablero a editar
+   */
   const handleEdit = (tablero) => {
     navigation.navigate('EditTablero', { tablero });
   };

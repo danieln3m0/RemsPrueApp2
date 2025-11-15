@@ -1,5 +1,30 @@
-// View: Formulario de Edición de Tablero
-// Vista 4: Formulario para editar un tablero eléctrico existente
+/**
+ * EditTableroView - Vista de edición de tableros eléctricos
+ * 
+ * Vista 4: Formulario completo para editar tableros eléctricos existentes.
+ * Recibe los datos del tablero a través de route.params, pre-carga el formulario,
+ * valida los cambios, y utiliza React Query mutation para actualizar el registro.
+ * Incluye botón de navegación hacia atrás y confirmación antes de cancelar.
+ * 
+ * @component
+ * @module views/EditTableroView
+ * @author Francis Daniel Mamani Silva
+ * @version 1.0.0
+ * 
+ * @param {Object} props - Props del componente
+ * @param {Object} props.navigation - Objeto de navegación de React Navigation
+ * @param {Function} props.navigation.goBack - Función para regresar a la pantalla anterior
+ * @param {Function} props.navigation.navigate - Función para navegar entre pantallas
+ * @param {Object} props.route - Objeto de ruta con parámetros
+ * @param {Object} props.route.params - Parámetros pasados a la pantalla
+ * @param {Object} props.route.params.tablero - Objeto tablero a editar con todos sus campos
+ * 
+ * @returns {React.Component} Formulario de edición de tablero pre-cargado
+ * 
+ * @example
+ * // Navegación desde lista con datos del tablero
+ * navigation.navigate('EditTablero', { tablero: tableroObject });
+ */
 
 import React, { useState, useEffect } from 'react';
 import {
@@ -19,10 +44,41 @@ import { Picker } from '@react-native-picker/picker';
 import { useTheme } from '../context/ThemeContext';
 import { useUpdateTablero } from '../hooks/useTableros';
 
+/**
+ * Componente funcional del formulario de edición de tableros
+ * 
+ * Características:
+ * - Pre-carga automática de datos del tablero desde route.params
+ * - Formulario con validación completa de campos requeridos
+ * - React Query mutation para actualizar tableros con caché automático
+ * - Tema dinámico (claro/oscuro)
+ * - Botón de cancelar con confirmación
+ * - Indicador de carga durante actualización (ActivityIndicator)
+ * - Navegación automática al Dashboard después de actualizar
+ * - Muestra el ID del tablero en un info card
+ * 
+ * @function
+ */
 const EditTableroView = ({ navigation, route }) => {
   const { theme, isDarkMode, toggleTheme } = useTheme();
+  
+  /** @const {Object} Objeto tablero recibido desde navegación */
   const { tablero } = route.params;
+  
+  /** React Query mutation hook para actualizar tableros */
   const updateTableroMutation = useUpdateTablero();
+  
+  /**
+   * Estado del formulario (inicialmente vacío, se carga en useEffect)
+   * @type {Object}
+   * @property {string} nombre - Nombre del tablero
+   * @property {string} ubicacion - Ubicación física del tablero
+   * @property {string} marca - Marca del fabricante
+   * @property {string} capacidad_amperios - Capacidad en amperios (como string para input)
+   * @property {string} ano_fabricacion - Año de fabricación
+   * @property {string} ano_instalacion - Año de instalación
+   * @property {string} estado - Estado actual (Operativo, Mantenimiento, Fuera de servicio)
+   */
   const [formData, setFormData] = useState({
     nombre: '',
     ubicacion: '',
@@ -33,9 +89,14 @@ const EditTableroView = ({ navigation, route }) => {
     estado: 'Operativo',
   });
 
+  /** @const {Array<string>} Opciones disponibles para el estado del tablero */
   const estadoOptions = ['Operativo', 'Mantenimiento', 'Fuera de servicio'];
 
-  // Cargar datos del tablero al montar el componente
+  /**
+   * Efecto que pre-carga los datos del tablero en el formulario
+   * Se ejecuta al montar el componente y cuando cambia el objeto tablero.
+   * Convierte los campos numéricos a string para compatibilidad con TextInput.
+   */
   useEffect(() => {
     if (tablero) {
       setFormData({
@@ -50,6 +111,13 @@ const EditTableroView = ({ navigation, route }) => {
     }
   }, [tablero]);
 
+  /**
+   * Actualiza un campo específico del formulario
+   * 
+   * @function
+   * @param {string} field - Nombre del campo a actualizar
+   * @param {string} value - Nuevo valor para el campo
+   */
   const handleInputChange = (field, value) => {
     setFormData(prev => ({
       ...prev,
@@ -57,8 +125,24 @@ const EditTableroView = ({ navigation, route }) => {
     }));
   };
 
+  /**
+   * Maneja el envío del formulario con validación completa
+   * 
+   * Validaciones:
+   * - Nombre: no vacío
+   * - Ubicación: no vacía
+   * - Marca: no vacía
+   * - Capacidad: debe ser un número válido
+   * 
+   * Después de validar, convierte los campos numéricos de string a int,
+   * ejecuta la mutation de React Query con el ID del tablero,
+   * y navega automáticamente al Dashboard al completarse exitosamente.
+   * 
+   * @function
+   * @async
+   */
   const handleSubmit = () => {
-    // Validar que los campos no estén vacíos
+    // Validar campos requeridos
     if (!formData.nombre.trim()) {
       Alert.alert('Error', 'El nombre es requerido');
       return;
@@ -79,7 +163,7 @@ const EditTableroView = ({ navigation, route }) => {
       return;
     }
 
-    // Preparar datos para enviar
+    // Preparar datos para API: convertir strings a números
     const dataToSend = {
       ...formData,
       capacidad_amperios: parseInt(formData.capacidad_amperios),
@@ -87,6 +171,7 @@ const EditTableroView = ({ navigation, route }) => {
       ano_instalacion: parseInt(formData.ano_instalacion),
     };
 
+    // Ejecutar mutation con ID y datos, incluyendo callbacks
     updateTableroMutation.mutate(
       { id: tablero.id, data: dataToSend },
       {
@@ -112,6 +197,12 @@ const EditTableroView = ({ navigation, route }) => {
     );
   };
 
+  /**
+   * Cancela la edición y regresa a la pantalla anterior
+   * Muestra un Alert de confirmación advirtiendo que se perderán los cambios no guardados.
+   * 
+   * @function
+   */
   const handleCancel = () => {
     Alert.alert(
       'Cancelar edición',

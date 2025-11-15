@@ -1,5 +1,15 @@
-// Navigation: App Navigation
-// Configura la navegación con Bottom Tabs y Stack Navigator
+/**
+ * AppNavigation - Configuración de navegación de la aplicación
+ * 
+ * Define la estructura de navegación utilizando React Navigation v6.
+ * Combina Bottom Tab Navigator (3 tabs principales) con Stack Navigator
+ * (para navegación entre Lista y Edición de tableros).
+ * Incluye soporte para tema dinámico y estilos personalizados para tabs.
+ * 
+ * @module navigation/AppNavigation
+ * @author Francis Daniel Mamani Silva
+ * @version 1.0.0
+ */
 
 import React from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
@@ -19,7 +29,18 @@ import EditTableroView from '../views/EditTableroView';
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
 
-// Stack Navigator para la sección de Tableros (incluye Lista y Edición)
+/**
+ * Stack Navigator para la sección de Tableros
+ * 
+ * Contiene dos pantallas:
+ * 1. Tableros - Lista completa con opciones CRUD
+ * 2. EditTablero - Formulario de edición (recibe tablero por parámetros)
+ * 
+ * Los headers se ocultan porque cada vista maneja su propio header personalizado.
+ * 
+ * @function
+ * @returns {React.Component} Stack Navigator con pantallas de tableros
+ */
 function TablerosStack() {
   return (
     <Stack.Navigator
@@ -41,7 +62,25 @@ function TablerosStack() {
   );
 }
 
-// Bottom Tab Navigator principal
+/**
+ * Componente principal de navegación de la aplicación
+ * 
+ * Bottom Tab Navigator con 3 tabs principales:
+ * 1. Inicio - Perfil del candidato (HomeView)
+ * 2. Dashboard - Lista y edición de tableros (TablerosStack)
+ * 3. Crear - Formulario de creación (CreateTableroView)
+ * 
+ * Características:
+ * - Iconos animados con fondo circular al estar activos
+ * - Indicador de gota (drop indicator) debajo del tab activo
+ * - Tema dinámico con colores adaptativos para modo claro/oscuro
+ * - Estilos personalizados para cada estado (focused/unfocused)
+ * - Height adaptativo con paddingBottom para dispositivos con notch
+ * - SafeAreaProvider para manejo seguro de áreas del dispositivo
+ * 
+ * @function
+ * @returns {React.Component} NavigationContainer con Bottom Tab Navigator
+ */
 function AppNavigation() {
   const { theme, isDarkMode } = useTheme();
   

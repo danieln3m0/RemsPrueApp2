@@ -1,7 +1,27 @@
-// Model: Tablero Electrico
-// Define la estructura de datos de un tablero eléctrico
-
+/**
+ * TableroElectricoModel - Modelo de datos para tableros eléctricos
+ * 
+ * Define la estructura y reglas de validación para los tableros eléctricos.
+ * Proporciona métodos para validar datos, convertir entre formatos JSON y objetos,
+ * y garantizar la integridad de los datos antes de enviarlos a la API.
+ * 
+ * @class
+ * @author Francis Daniel Mamani Silva
+ * @version 1.0.0
+ */
 class TableroElectricoModel {
+  /**
+   * Constructor del modelo de tablero eléctrico
+   * @param {Object} data - Datos iniciales del tablero
+   * @param {string} [data.id] - Identificador único del tablero
+   * @param {string} [data.nombre] - Nombre descriptivo del tablero
+   * @param {string} [data.ubicacion] - Ubicación física del tablero
+   * @param {string} [data.marca] - Marca del fabricante
+   * @param {number} [data.capacidad_amperios] - Capacidad en amperios
+   * @param {number} [data.ano_fabricacion] - Año de fabricación
+   * @param {number} [data.ano_instalacion] - Año de instalación
+   * @param {string} [data.estado] - Estado operativo: 'Operativo', 'Mantenimiento', 'Fuera de servicio'
+   */
   constructor(data = {}) {
     this.id = data.id || null;
     this.nombre = data.nombre || '';
@@ -13,7 +33,16 @@ class TableroElectricoModel {
     this.estado = data.estado || 'Operativo';
   }
 
-  // Valida que los campos requeridos estén presentes
+  /**
+   * Valida los datos del tablero eléctrico
+   * 
+   * Verifica que todos los campos requeridos estén presentes y cumplan
+   * con las reglas de negocio (rangos válidos, coherencia de fechas, etc.)
+   * 
+   * @returns {Object} Resultado de la validación
+   * @returns {boolean} returns.isValid - Indica si los datos son válidos
+   * @returns {Array<string>} returns.errors - Lista de errores encontrados
+   */
   validate() {
     const errors = [];
     
@@ -51,7 +80,14 @@ class TableroElectricoModel {
     };
   }
 
-  // Convierte el modelo a formato para la API
+  /**
+   * Convierte el modelo a formato JSON para la API
+   * 
+   * Serializa el objeto a un formato compatible con la API REST.
+   * Solo incluye el ID si existe (útil para diferenciar creación de actualización).
+   * 
+   * @returns {Object} Objeto JSON con los datos del tablero
+   */
   toJSON() {
     const json = {
       nombre: this.nombre,
@@ -71,10 +107,23 @@ class TableroElectricoModel {
     return json;
   }
 
-  // Crea una instancia desde datos de la API
+  /**
+   * Crea una instancia del modelo desde datos JSON de la API
+   * 
+   * Método estático factory para crear instancias del modelo
+   * a partir de respuestas de la API.
+   * 
+   * @static
+   * @param {Object} json - Datos JSON recibidos de la API
+   * @returns {TableroElectricoModel} Nueva instancia del modelo
+   */
   static fromJSON(json) {
     return new TableroElectricoModel(json);
   }
 }
 
+/**
+ * Exporta la clase TableroElectricoModel
+ * @type {TableroElectricoModel}
+ */
 export default TableroElectricoModel;
