@@ -15,6 +15,8 @@
 
 import React, { useState } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { SafeAreaView, SafeAreaProvider } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AppNavigation from './src/navigation/AppNavigation';
 import SplashScreen from './src/components/SplashScreen';
 import { ThemeProvider } from './src/context/ThemeContext';
@@ -42,15 +44,40 @@ const queryClient = new QueryClient({
 });
 
 /**
+ * Componente wrapper que maneja SafeAreaView para toda la aplicación
+ * Aplica los insets necesarios para APK en dispositivos reales
+ * 
+ * @function
+ * @returns {React.Component} App envuelta en SafeAreaView con insets apropiados
+ */
+function SafeWrapper() {
+  const insets = useSafeAreaInsets();
+  
+  return (
+    <SafeAreaView 
+      style={{ 
+        flex: 1, 
+        paddingTop: insets.top,
+        paddingBottom: insets.bottom 
+      }}
+      edges={['top']}
+    >
+      <AppNavigation />
+    </SafeAreaView>
+  );
+}
+
+/**
  * Componente raíz de la aplicación
  * 
  * Flujo de ejecución:
  * 1. Muestra SplashScreen durante isLoading = true (2.5 segundos)
  * 2. Oculta SplashScreen y muestra la app principal
- * 3. Envuelve la app en providers para React Query y Theme
+ * 3. Envuelve la app en providers para SafeArea, React Query y Theme
+ * 4. SafeWrapper maneja las áreas seguras para APK
  * 
  * Orden de providers (de afuera hacia adentro):
- * QueryClientProvider > ThemeProvider > AppNavigation
+ * SafeAreaProvider > QueryClientProvider > ThemeProvider > SafeWrapper > AppNavigation
  * 
  * @function
  * @returns {React.Component} Aplicación completa con providers y navegación
@@ -61,15 +88,21 @@ export default function App() {
 
   // Fase de carga: mostrar SplashScreen
   if (isLoading) {
-    return <SplashScreen onFinish={() => setIsLoading(false)} />;
+    return (
+      <SafeAreaProvider>
+        <SplashScreen onFinish={() => setIsLoading(false)} />
+      </SafeAreaProvider>
+    );
   }
 
-  // Fase principal: app completa con providers anidados
+  // Fase principal: app completa con providers anidados y SafeArea
   return (
-    <QueryClientProvider client={queryClient}>
-      <ThemeProvider>
-        <AppNavigation />
-      </ThemeProvider>
-    </QueryClientProvider>
+    <SafeAreaProvider>
+      <QueryClientProvider client={queryClient}>
+        <ThemeProvider>
+          <SafeWrapper />
+        </ThemeProvider>
+      </QueryClientProvider>
+    </SafeAreaProvider>
   );
 }
