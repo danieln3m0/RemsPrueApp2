@@ -34,8 +34,14 @@ export const useTableros = () => {
     queryKey: ['tableros'],
     queryFn: async () => {
       const response = await TableroService.getAllTableros();
+      
+      // Si hay error, lanzar excepción para que React Query maneje el estado de error
+      if (!response.success) {
+        throw new Error(response.error || 'Error al obtener tableros');
+      }
+      
       // Retornar directamente el array de datos
-      return response.success ? response.data : [];
+      return response.data || [];
     },
     staleTime: 5 * 60 * 1000, // 5 minutos
     cacheTime: 10 * 60 * 1000, // 10 minutos

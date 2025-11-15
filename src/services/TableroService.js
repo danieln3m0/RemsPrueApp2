@@ -44,6 +44,7 @@ class TableroService {
       }
 
       const data = await response.json();
+      
       return {
         success: true,
         data: data,

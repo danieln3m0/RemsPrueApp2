@@ -55,9 +55,6 @@ import { useTableros, useDeleteTablero } from '../hooks/useTableros';
 const TablerosListView = ({ navigation }) => {
   const { theme, isDarkMode, toggleTheme } = useTheme();
   
-  /** @type {Array} Array de tableros mostrados actualmente (con paginación) */
-  const [displayedTableros, setDisplayedTableros] = useState([]);
-  
   /** @type {number} Número de página actual para infinite scroll */
   const [page, setPage] = useState(1);
   
@@ -73,6 +70,12 @@ const TablerosListView = ({ navigation }) => {
   /** Extracción segura de tableros desde la respuesta de la API */
   const tableros = Array.isArray(data) ? data : [];
   
+  /** @type {Array} Array de tableros mostrados actualmente (con paginación) - calculado directamente */
+  const displayedTableros = React.useMemo(() => {
+    if (!tableros || tableros.length === 0) return [];
+    return tableros.slice(0, page * ITEMS_PER_PAGE);
+  }, [tableros, page]);
+  
   /** Animated.Value para controlar la animación del header */
   const scrollY = useRef(new Animated.Value(0)).current;
   const headerHeight = 80;
@@ -84,16 +87,12 @@ const TablerosListView = ({ navigation }) => {
   });
 
   /**
-   * Efecto que actualiza los items mostrados cuando cambian los datos
-   * Reinicia la paginación mostrando los primeros 10 items al recibir datos nuevos
+   * Efecto para resetear la paginación cuando cambian los datos
+   * Solo maneja el reset del número de página, no el estado derivado
    */
   React.useEffect(() => {
     if (!isLoading && tableros && tableros.length > 0) {
-      const initial = tableros.slice(0, ITEMS_PER_PAGE);
-      setDisplayedTableros(initial);
       setPage(1);
-    } else if (!isLoading) {
-      setDisplayedTableros([]);
     }
   }, [data, isLoading]);
 
@@ -106,14 +105,7 @@ const TablerosListView = ({ navigation }) => {
    */
   const loadMoreTableros = () => {
     if (!tableros || displayedTableros.length >= tableros.length) return;
-
-    const nextPage = page + 1;
-    const startIndex = page * ITEMS_PER_PAGE;
-    const endIndex = startIndex + ITEMS_PER_PAGE;
-    const newItems = tableros.slice(startIndex, endIndex);
-    
-    setDisplayedTableros([...displayedTableros, ...newItems]);
-    setPage(nextPage);
+    setPage(prevPage => prevPage + 1);
   };
 
   /**

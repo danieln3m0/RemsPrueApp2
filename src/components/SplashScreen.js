@@ -151,7 +151,7 @@ const SplashScreen = ({ onFinish }) => {
       </Animated.View>
 
       <Animated.Text style={[styles.footer, { opacity: fadeAnim }]}>
-        Powered by Francis D. Nemocón
+        Powered by Francis D.
       </Animated.Text>
     </View>
   );

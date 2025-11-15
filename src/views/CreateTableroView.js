@@ -364,18 +364,18 @@ const CreateTableroView = ({ navigation }) => {
 
         <View style={styles.actionsContainer}>
           <TouchableOpacity 
-            style={[styles.actionButton, styles.clearButton]}
+            style={[styles.actionButton, styles.clearButton, { backgroundColor: theme.colors.buttonSecondary, borderColor: theme.colors.error }]}
             onPress={handleClear}
             disabled={createTableroMutation.isPending}
           >
-            <Ionicons name="refresh" size={20} color="#f56565" />
-            <Text style={[styles.actionButtonText, styles.clearButtonText]}>
+            <Ionicons name="refresh" size={20} color={theme.colors.error} />
+            <Text style={[styles.actionButtonText, { color: theme.colors.error }]}>
               Limpiar
             </Text>
           </TouchableOpacity>
 
           <TouchableOpacity 
-            style={[styles.actionButton, styles.submitButton]}
+            style={[styles.actionButton, styles.submitButton, { backgroundColor: theme.colors.buttonPrimary }]}
             onPress={handleSubmit}
             disabled={createTableroMutation.isPending}
           >
@@ -497,20 +497,14 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   submitButton: {
-    backgroundColor: '#667eea',
   },
   clearButton: {
-    backgroundColor: '#ffffff',
     borderWidth: 2,
-    borderColor: '#f56565',
   },
   actionButtonText: {
     fontSize: 16,
     fontWeight: 'bold',
     color: '#ffffff',
-  },
-  clearButtonText: {
-    color: '#f56565',
   },
 });
 
