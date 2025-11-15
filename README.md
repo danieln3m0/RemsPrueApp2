@@ -88,7 +88,7 @@ Una vez completado el build, EAS te proporcionará una URL pública donde podrá
 
 Ejemplo de URL: `https://expo.dev/accounts/[tu-usuario]/projects/RemsPrueApp2/builds/[build-id]`
 
-## 📋 Información del Candidato
+## 📋 Información personal
 
 La aplicación muestra:
 - ✅ Nombre completo
