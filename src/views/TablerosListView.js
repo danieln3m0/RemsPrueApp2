@@ -1,7 +1,7 @@
 // View: Lista de Tableros (Dashboard)
 // Vista 2: Muestra la lista de tableros con opciones de editar y eliminar
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -11,70 +11,57 @@ import {
   Alert,
   RefreshControl,
   ActivityIndicator,
+  Animated,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useFocusEffect } from '@react-navigation/native';
-import TableroController from '../controllers/TableroController';
+import { useTheme } from '../context/ThemeContext';
+import { useTableros, useDeleteTablero } from '../hooks/useTableros';
 
 const TablerosListView = ({ navigation }) => {
-  const [tableros, setTableros] = useState([]);
+  const { theme, isDarkMode, toggleTheme } = useTheme();
   const [displayedTableros, setDisplayedTableros] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [loadingMore, setLoadingMore] = useState(false);
   const [page, setPage] = useState(1);
   const ITEMS_PER_PAGE = 10;
+  
+  // React Query hooks
+  const { data, isLoading, isError, refetch } = useTableros();
+  const deleteTableroMutation = useDeleteTablero();
+  
+  // Extraer tableros del resultado de la API
+  const tableros = Array.isArray(data) ? data : [];
+  
+  // Animación para ocultar/mostrar header
+  const scrollY = useRef(new Animated.Value(0)).current;
+  const headerHeight = 80;
+  
+  const headerTranslateY = scrollY.interpolate({
+    inputRange: [0, headerHeight],
+    outputRange: [0, -headerHeight],
+    extrapolate: 'clamp',
+  });
 
-  // Cargar tableros
-  const loadTableros = async () => {
-    try {
-      const result = await TableroController.getTableros();
-      
-      if (result.success) {
-        setTableros(result.data);
-        // Cargar primeros items
-        setDisplayedTableros(result.data.slice(0, ITEMS_PER_PAGE));
-        setPage(1);
-      } else {
-        Alert.alert('Error', result.error || 'No se pudieron cargar los tableros');
-      }
-    } catch (error) {
-      Alert.alert('Error', 'Error al conectar con el servidor');
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
+  // Actualizar items mostrados cuando cambian los datos
+  React.useEffect(() => {
+    if (!isLoading && tableros && tableros.length > 0) {
+      const initial = tableros.slice(0, ITEMS_PER_PAGE);
+      setDisplayedTableros(initial);
+      setPage(1);
+    } else if (!isLoading) {
+      setDisplayedTableros([]);
     }
-  };
+  }, [data, isLoading]);
 
   // Cargar más items (infinite scroll)
   const loadMoreTableros = () => {
-    if (loadingMore || displayedTableros.length >= tableros.length) return;
+    if (!tableros || displayedTableros.length >= tableros.length) return;
 
-    setLoadingMore(true);
+    const nextPage = page + 1;
+    const startIndex = page * ITEMS_PER_PAGE;
+    const endIndex = startIndex + ITEMS_PER_PAGE;
+    const newItems = tableros.slice(startIndex, endIndex);
     
-    setTimeout(() => {
-      const nextPage = page + 1;
-      const startIndex = page * ITEMS_PER_PAGE;
-      const endIndex = startIndex + ITEMS_PER_PAGE;
-      const newItems = tableros.slice(startIndex, endIndex);
-      
-      setDisplayedTableros([...displayedTableros, ...newItems]);
-      setPage(nextPage);
-      setLoadingMore(false);
-    }, 500); // Pequeño delay para simular carga
-  };
-
-  // Cargar al montar y cuando se enfoca la pantalla
-  useFocusEffect(
-    useCallback(() => {
-      loadTableros();
-    }, [])
-  );
-
-  // Refrescar lista
-  const onRefresh = () => {
-    setRefreshing(true);
-    loadTableros();
+    setDisplayedTableros([...displayedTableros, ...newItems]);
+    setPage(nextPage);
   };
 
   // Manejar eliminación
@@ -90,19 +77,12 @@ const TablerosListView = ({ navigation }) => {
         {
           text: 'Eliminar',
           style: 'destructive',
-          onPress: async () => {
-            try {
-              const result = await TableroController.deleteTablero(tablero.id);
-              
-              if (result.success) {
+          onPress: () => {
+            deleteTableroMutation.mutate(tablero.id, {
+              onSuccess: () => {
                 Alert.alert('Éxito', 'Tablero eliminado correctamente');
-                loadTableros(); // Refrescar lista
-              } else {
-                Alert.alert('Error', result.error || 'No se pudo eliminar el tablero');
-              }
-            } catch (error) {
-              Alert.alert('Error', 'Error al eliminar el tablero');
-            }
+              },
+            });
           },
         },
       ]
@@ -116,31 +96,31 @@ const TablerosListView = ({ navigation }) => {
 
   // Renderizar cada item de la lista
   const renderTablero = ({ item }) => (
-    <View style={styles.card}>
-      <View style={styles.cardHeader}>
-        <View style={styles.iconContainer}>
-          <Ionicons name="flash" size={24} color="#667eea" />
+    <View style={[styles.card, { backgroundColor: theme.colors.card }]}>
+      <View style={[styles.cardHeader, { backgroundColor: theme.colors.cardBackground, borderBottomColor: theme.colors.border }]}>
+        <View style={[styles.iconContainer, { backgroundColor: isDarkMode ? theme.colors.cardBackground : '#edf2f7' }]}>
+          <Ionicons name="flash" size={24} color={theme.colors.primary} />
         </View>
         <View style={styles.cardHeaderText}>
-          <Text style={styles.tableroNombre}>{item.nombre}</Text>
+          <Text style={[styles.tableroNombre, { color: theme.colors.text }]}>{item.nombre}</Text>
           <View style={styles.ubicacionContainer}>
-            <Ionicons name="location-outline" size={16} color="#8492a6" />
-            <Text style={styles.tableroUbicacion}>{item.ubicacion}</Text>
+            <Ionicons name="location-outline" size={16} color={theme.colors.textSecondary} />
+            <Text style={[styles.tableroUbicacion, { color: theme.colors.textSecondary }]}>{item.ubicacion}</Text>
           </View>
         </View>
       </View>
 
       <View style={styles.cardBody}>
         <View style={styles.infoRow}>
-          <Text style={styles.infoLabel}>Marca:</Text>
-          <Text style={styles.infoValue}>{item.marca}</Text>
+          <Text style={[styles.infoLabel, { color: theme.colors.textSecondary }]}>Marca:</Text>
+          <Text style={[styles.infoValue, { color: theme.colors.text }]}>{item.marca}</Text>
         </View>
         <View style={styles.infoRow}>
-          <Text style={styles.infoLabel}>Capacidad:</Text>
-          <Text style={styles.infoValue}>{item.capacidad_amperios} A</Text>
+          <Text style={[styles.infoLabel, { color: theme.colors.textSecondary }]}>Capacidad:</Text>
+          <Text style={[styles.infoValue, { color: theme.colors.text }]}>{item.capacidad_amperios} A</Text>
         </View>
         <View style={styles.infoRow}>
-          <Text style={styles.infoLabel}>Estado:</Text>
+          <Text style={[styles.infoLabel, { color: theme.colors.textSecondary }]}>Estado:</Text>
           <View style={[styles.estadoBadge, 
             item.estado === 'Operativo' && styles.estadoOperativo,
             item.estado === 'Mantenimiento' && styles.estadoMantenimiento,
@@ -150,16 +130,16 @@ const TablerosListView = ({ navigation }) => {
           </View>
         </View>
         <View style={styles.infoRow}>
-          <Text style={styles.infoLabel}>Fabricación:</Text>
-          <Text style={styles.infoValue}>{item.ano_fabricacion}</Text>
+          <Text style={[styles.infoLabel, { color: theme.colors.textSecondary }]}>Fabricación:</Text>
+          <Text style={[styles.infoValue, { color: theme.colors.text }]}>{item.ano_fabricacion}</Text>
         </View>
         <View style={styles.infoRow}>
-          <Text style={styles.infoLabel}>Instalación:</Text>
-          <Text style={styles.infoValue}>{item.ano_instalacion}</Text>
+          <Text style={[styles.infoLabel, { color: theme.colors.textSecondary }]}>Instalación:</Text>
+          <Text style={[styles.infoValue, { color: theme.colors.text }]}>{item.ano_instalacion}</Text>
         </View>
       </View>
 
-      <View style={styles.cardActions}>
+      <View style={[styles.cardActions, { borderTopColor: theme.colors.border }]}>
         <TouchableOpacity 
           style={[styles.button, styles.editButton]}
           onPress={() => handleEdit(item)}
@@ -179,51 +159,91 @@ const TablerosListView = ({ navigation }) => {
     </View>
   );
 
-  if (loading) {
+  if (isLoading) {
     return (
-      <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" color="#667eea" />
-        <Text style={styles.loadingText}>Cargando tableros...</Text>
+      <View style={[styles.centerContainer, { backgroundColor: theme.colors.background }]}>
+        <ActivityIndicator size="large" color={theme.colors.primary} />
+        <Text style={[styles.loadingText, { color: theme.colors.primary }]}>Cargando tableros...</Text>
+      </View>
+    );
+  }
+
+  if (isError) {
+    return (
+      <View style={[styles.centerContainer, { backgroundColor: theme.colors.background }]}>
+        <Ionicons name="alert-circle" size={80} color={theme.colors.error} />
+        <Text style={[styles.errorText, { color: theme.colors.error }]}>Error al cargar tableros</Text>
+        <TouchableOpacity 
+          style={[styles.retryButton, { backgroundColor: theme.colors.primary }]}
+          onPress={() => refetch()}
+        >
+          <Text style={styles.retryButtonText}>Reintentar</Text>
+        </TouchableOpacity>
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Ionicons name="grid" size={28} color="#667eea" />
-        <Text style={styles.headerTitle}>Tableros Eléctricos</Text>
-      </View>
+    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+      <Animated.View 
+        style={[
+          styles.header, 
+          { 
+            backgroundColor: theme.colors.card, 
+            borderBottomColor: theme.colors.border,
+            transform: [{ translateY: headerTranslateY }],
+          }
+        ]}
+      >
+        <Ionicons name="grid" size={28} color={theme.colors.primary} />
+        <Text style={[styles.headerTitle, { color: theme.colors.text }]}>Tableros Eléctricos</Text>
+        <TouchableOpacity 
+          style={styles.themeToggle}
+          onPress={toggleTheme}
+        >
+          <Ionicons 
+            name={isDarkMode ? 'sunny' : 'moon'} 
+            size={24} 
+            color={theme.colors.primary} 
+          />
+        </TouchableOpacity>
+      </Animated.View>
 
-      {tableros.length === 0 ? (
+      {!isLoading && tableros.length === 0 ? (
         <View style={styles.emptyContainer}>
-          <Ionicons name="file-tray-outline" size={80} color="#cbd5e0" />
-          <Text style={styles.emptyText}>No hay tableros registrados</Text>
-          <Text style={styles.emptySubtext}>
+          <Ionicons name="file-tray-outline" size={80} color={theme.colors.border} />
+          <Text style={[styles.emptyText, { color: theme.colors.text }]}>No hay tableros registrados</Text>
+          <Text style={[styles.emptySubtext, { color: theme.colors.textSecondary }]}>
             Usa la pestaña "Crear" para agregar uno nuevo
           </Text>
         </View>
       ) : (
-        <FlatList
+        <Animated.FlatList
           data={displayedTableros}
           renderItem={renderTablero}
           keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.listContent}
+          contentContainerStyle={[styles.listContent, { paddingTop: headerHeight }]}
           refreshControl={
             <RefreshControl
-              refreshing={refreshing}
-              onRefresh={onRefresh}
-              colors={['#667eea']}
-              tintColor="#667eea"
+              refreshing={false}
+              onRefresh={() => refetch()}
+              colors={[theme.colors.primary]}
+              tintColor={theme.colors.primary}
+              progressViewOffset={headerHeight}
             />
           }
+          onScroll={Animated.event(
+            [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+            { useNativeDriver: true }
+          )}
+          scrollEventThrottle={16}
           onEndReached={loadMoreTableros}
           onEndReachedThreshold={0.5}
           ListFooterComponent={() => 
-            loadingMore && displayedTableros.length < tableros.length ? (
+            displayedTableros.length < tableros.length && displayedTableros.length > 0 ? (
               <View style={styles.footerLoader}>
-                <ActivityIndicator size="small" color="#667eea" />
-                <Text style={styles.footerText}>Cargando más...</Text>
+                <ActivityIndicator size="small" color={theme.colors.primary} />
+                <Text style={[styles.footerText, { color: theme.colors.primary }]}>Cargando más...</Text>
               </View>
             ) : null
           }
@@ -236,18 +256,15 @@ const TablerosListView = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f7fa',
   },
   centerContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f5f7fa',
   },
   loadingText: {
     marginTop: 12,
     fontSize: 16,
-    color: '#667eea',
     fontWeight: '600',
   },
   header: {
@@ -255,21 +272,31 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 20,
     paddingTop: 20,
-    backgroundColor: '#ffffff',
     borderBottomWidth: 1,
-    borderBottomColor: '#e8ecef',
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 1000,
+    height: 80,
   },
   headerTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#2c3e50',
     marginLeft: 12,
+    flex: 1,
+  },
+  themeToggle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   listContent: {
     padding: 16,
   },
   card: {
-    backgroundColor: '#ffffff',
     borderRadius: 12,
     marginBottom: 16,
     shadowColor: '#000',
@@ -283,15 +310,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: 16,
-    backgroundColor: '#f8f9fa',
     borderBottomWidth: 1,
-    borderBottomColor: '#e8ecef',
   },
   iconContainer: {
     width: 50,
     height: 50,
     borderRadius: 25,
-    backgroundColor: '#edf2f7',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
@@ -302,7 +326,6 @@ const styles = StyleSheet.create({
   tableroNombre: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#2c3e50',
     marginBottom: 4,
   },
   ubicacionContainer: {
@@ -311,7 +334,6 @@ const styles = StyleSheet.create({
   },
   tableroUbicacion: {
     fontSize: 14,
-    color: '#8492a6',
     marginLeft: 4,
   },
   cardBody: {
@@ -325,12 +347,10 @@ const styles = StyleSheet.create({
   },
   infoLabel: {
     fontSize: 14,
-    color: '#8492a6',
     fontWeight: '600',
   },
   infoValue: {
     fontSize: 14,
-    color: '#2c3e50',
     fontWeight: '600',
   },
   estadoBadge: {
@@ -355,7 +375,6 @@ const styles = StyleSheet.create({
   cardActions: {
     flexDirection: 'row',
     borderTopWidth: 1,
-    borderTopColor: '#e8ecef',
   },
   button: {
     flex: 1,
@@ -389,13 +408,11 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#2c3e50',
     marginTop: 20,
     textAlign: 'center',
   },
   emptySubtext: {
     fontSize: 14,
-    color: '#8492a6',
     marginTop: 8,
     textAlign: 'center',
   },
@@ -407,7 +424,23 @@ const styles = StyleSheet.create({
   footerText: {
     marginTop: 8,
     fontSize: 14,
-    color: '#667eea',
+    fontWeight: '600',
+  },
+  errorText: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginTop: 20,
+    textAlign: 'center',
+  },
+  retryButton: {
+    marginTop: 20,
+    paddingHorizontal: 30,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    color: '#ffffff',
+    fontSize: 16,
     fontWeight: '600',
   },
 });

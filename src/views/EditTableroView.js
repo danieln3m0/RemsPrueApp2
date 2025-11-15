@@ -16,11 +16,13 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Picker } from '@react-native-picker/picker';
-import TableroController from '../controllers/TableroController';
+import { useTheme } from '../context/ThemeContext';
+import { useUpdateTablero } from '../hooks/useTableros';
 
 const EditTableroView = ({ navigation, route }) => {
+  const { theme, isDarkMode, toggleTheme } = useTheme();
   const { tablero } = route.params;
-  const [loading, setLoading] = useState(false);
+  const updateTableroMutation = useUpdateTablero();
   const [formData, setFormData] = useState({
     nombre: '',
     ubicacion: '',
@@ -55,7 +57,7 @@ const EditTableroView = ({ navigation, route }) => {
     }));
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = () => {
     // Validar que los campos no estén vacíos
     if (!formData.nombre.trim()) {
       Alert.alert('Error', 'El nombre es requerido');
@@ -77,41 +79,37 @@ const EditTableroView = ({ navigation, route }) => {
       return;
     }
 
-    setLoading(true);
+    // Preparar datos para enviar
+    const dataToSend = {
+      ...formData,
+      capacidad_amperios: parseInt(formData.capacidad_amperios),
+      ano_fabricacion: parseInt(formData.ano_fabricacion),
+      ano_instalacion: parseInt(formData.ano_instalacion),
+    };
 
-    try {
-      // Preparar datos para enviar
-      const dataToSend = {
-        ...formData,
-        capacidad_amperios: parseInt(formData.capacidad_amperios),
-        ano_fabricacion: parseInt(formData.ano_fabricacion),
-        ano_instalacion: parseInt(formData.ano_instalacion),
-      };
-
-      const result = await TableroController.updateTablero(tablero.id, dataToSend);
-
-      if (result.success) {
-        Alert.alert(
-          'Éxito',
-          'Tablero actualizado correctamente',
-          [
-            {
-              text: 'OK',
-              onPress: () => {
-                // Navegar de regreso a la lista de tableros
-                navigation.navigate('Tableros');
+    updateTableroMutation.mutate(
+      { id: tablero.id, data: dataToSend },
+      {
+        onSuccess: () => {
+          Alert.alert(
+            'Éxito',
+            'Tablero actualizado correctamente',
+            [
+              {
+                text: 'OK',
+                onPress: () => {
+                  // Navegar de regreso a la lista de tableros
+                  navigation.navigate('Dashboard', { screen: 'Tableros' });
+                },
               },
-            },
-          ]
-        );
-      } else {
-        Alert.alert('Error', result.error || 'No se pudo actualizar el tablero');
+            ]
+          );
+        },
+        onError: () => {
+          Alert.alert('Error', 'No se pudo actualizar el tablero');
+        },
       }
-    } catch (error) {
-      Alert.alert('Error', 'Error al actualizar el tablero');
-    } finally {
-      setLoading(false);
-    }
+    );
   };
 
   const handleCancel = () => {
@@ -130,15 +128,25 @@ const EditTableroView = ({ navigation, route }) => {
 
   return (
     <KeyboardAvoidingView 
-      style={styles.container}
+      style={[styles.container, { backgroundColor: theme.colors.background }]}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <View style={styles.header}>
+      <View style={[styles.header, { backgroundColor: theme.colors.card, borderBottomColor: theme.colors.border }]}>
         <TouchableOpacity onPress={handleCancel} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color="#667eea" />
+          <Ionicons name="arrow-back" size={24} color={theme.colors.primary} />
         </TouchableOpacity>
-        <Ionicons name="pencil" size={28} color="#667eea" />
-        <Text style={styles.headerTitle}>Editar Tablero</Text>
+        <Ionicons name="pencil" size={28} color={theme.colors.primary} />
+        <Text style={[styles.headerTitle, { color: theme.colors.text }]}>Editar Tablero</Text>
+        <TouchableOpacity 
+          style={styles.themeToggle}
+          onPress={toggleTheme}
+        >
+          <Ionicons 
+            name={isDarkMode ? 'sunny' : 'moon'} 
+            size={24} 
+            color={theme.colors.primary} 
+          />
+        </TouchableOpacity>
       </View>
 
       <ScrollView 
@@ -146,93 +154,93 @@ const EditTableroView = ({ navigation, route }) => {
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
       >
-        <View style={styles.card}>
+        <View style={[styles.card, { backgroundColor: theme.colors.card }]}>
           <View style={styles.sectionHeader}>
-            <Ionicons name="information-circle" size={22} color="#667eea" />
-            <Text style={styles.sectionTitle}>Información General</Text>
+            <Ionicons name="information-circle" size={22} color={theme.colors.primary} />
+            <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Información General</Text>
           </View>
 
           <View style={styles.formGroup}>
-            <Text style={styles.label}>Nombre *</Text>
+            <Text style={[styles.label, { color: theme.colors.text }]}>Nombre *</Text>
             <TextInput
-              style={styles.input}
+              style={[styles.input, { backgroundColor: theme.colors.cardBackground, borderColor: theme.colors.border, color: theme.colors.text }]}
               placeholder="Ej: Tablero Piso 1 - Ala Norte"
               value={formData.nombre}
               onChangeText={(value) => handleInputChange('nombre', value)}
-              placeholderTextColor="#a0aec0"
+              placeholderTextColor={theme.colors.textSecondary}
             />
           </View>
 
           <View style={styles.formGroup}>
-            <Text style={styles.label}>Ubicación *</Text>
+            <Text style={[styles.label, { color: theme.colors.text }]}>Ubicación *</Text>
             <TextInput
-              style={styles.input}
+              style={[styles.input, { backgroundColor: theme.colors.cardBackground, borderColor: theme.colors.border, color: theme.colors.text }]}
               placeholder="Ej: Sala de máquinas, Sótano 1"
               value={formData.ubicacion}
               onChangeText={(value) => handleInputChange('ubicacion', value)}
-              placeholderTextColor="#a0aec0"
+              placeholderTextColor={theme.colors.textSecondary}
             />
           </View>
 
           <View style={styles.formGroup}>
-            <Text style={styles.label}>Marca *</Text>
+            <Text style={[styles.label, { color: theme.colors.text }]}>Marca *</Text>
             <TextInput
-              style={styles.input}
+              style={[styles.input, { backgroundColor: theme.colors.cardBackground, borderColor: theme.colors.border, color: theme.colors.text }]}
               placeholder="Ej: Schneider Electric"
               value={formData.marca}
               onChangeText={(value) => handleInputChange('marca', value)}
-              placeholderTextColor="#a0aec0"
+              placeholderTextColor={theme.colors.textSecondary}
             />
           </View>
         </View>
 
-        <View style={styles.card}>
+        <View style={[styles.card, { backgroundColor: theme.colors.card }]}>
           <View style={styles.sectionHeader}>
-            <Ionicons name="settings" size={22} color="#667eea" />
-            <Text style={styles.sectionTitle}>Especificaciones Técnicas</Text>
+            <Ionicons name="settings" size={22} color={theme.colors.primary} />
+            <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Especificaciones Técnicas</Text>
           </View>
 
           <View style={styles.formGroup}>
-            <Text style={styles.label}>Capacidad (Amperios) *</Text>
+            <Text style={[styles.label, { color: theme.colors.text }]}>Capacidad (Amperios) *</Text>
             <TextInput
-              style={styles.input}
+              style={[styles.input, { backgroundColor: theme.colors.cardBackground, borderColor: theme.colors.border, color: theme.colors.text }]}
               placeholder="Ej: 200"
               value={formData.capacidad_amperios}
               onChangeText={(value) => handleInputChange('capacidad_amperios', value)}
               keyboardType="numeric"
-              placeholderTextColor="#a0aec0"
+              placeholderTextColor={theme.colors.textSecondary}
             />
           </View>
 
           <View style={styles.formGroup}>
-            <Text style={styles.label}>Año de Fabricación *</Text>
+            <Text style={[styles.label, { color: theme.colors.text }]}>Año de Fabricación *</Text>
             <TextInput
-              style={styles.input}
+              style={[styles.input, { backgroundColor: theme.colors.cardBackground, borderColor: theme.colors.border, color: theme.colors.text }]}
               placeholder="Ej: 2020"
               value={formData.ano_fabricacion}
               onChangeText={(value) => handleInputChange('ano_fabricacion', value)}
               keyboardType="numeric"
               maxLength={4}
-              placeholderTextColor="#a0aec0"
+              placeholderTextColor={theme.colors.textSecondary}
             />
           </View>
 
           <View style={styles.formGroup}>
-            <Text style={styles.label}>Año de Instalación *</Text>
+            <Text style={[styles.label, { color: theme.colors.text }]}>Año de Instalación *</Text>
             <TextInput
-              style={styles.input}
+              style={[styles.input, { backgroundColor: theme.colors.cardBackground, borderColor: theme.colors.border, color: theme.colors.text }]}
               placeholder="Ej: 2021"
               value={formData.ano_instalacion}
               onChangeText={(value) => handleInputChange('ano_instalacion', value)}
               keyboardType="numeric"
               maxLength={4}
-              placeholderTextColor="#a0aec0"
+              placeholderTextColor={theme.colors.textSecondary}
             />
           </View>
 
           <View style={styles.formGroup}>
-            <Text style={styles.label}>Estado *</Text>
-            <View style={styles.pickerContainer}>
+            <Text style={[styles.label, { color: theme.colors.text }]}>Estado *</Text>
+            <View style={[styles.pickerContainer, { backgroundColor: theme.colors.cardBackground, borderColor: theme.colors.border }]}>
               <Picker
                 selectedValue={formData.estado}
                 onValueChange={(value) => handleInputChange('estado', value)}
@@ -246,9 +254,9 @@ const EditTableroView = ({ navigation, route }) => {
           </View>
         </View>
 
-        <View style={styles.infoCard}>
-          <Ionicons name="information-circle-outline" size={20} color="#667eea" />
-          <Text style={styles.infoText}>
+        <View style={[styles.infoCard, { backgroundColor: isDarkMode ? theme.colors.cardBackground : '#edf2f7', borderColor: theme.colors.border }]}>
+          <Ionicons name="information-circle-outline" size={20} color={theme.colors.primary} />
+          <Text style={[styles.infoText, { color: theme.colors.primary }]}>
             ID del tablero: {tablero.id}
           </Text>
         </View>
@@ -257,7 +265,7 @@ const EditTableroView = ({ navigation, route }) => {
           <TouchableOpacity 
             style={[styles.actionButton, styles.cancelButton]}
             onPress={handleCancel}
-            disabled={loading}
+            disabled={updateTableroMutation.isPending}
           >
             <Ionicons name="close-circle" size={20} color="#f56565" />
             <Text style={[styles.actionButtonText, styles.cancelButtonText]}>
@@ -268,9 +276,9 @@ const EditTableroView = ({ navigation, route }) => {
           <TouchableOpacity 
             style={[styles.actionButton, styles.submitButton]}
             onPress={handleSubmit}
-            disabled={loading}
+            disabled={updateTableroMutation.isPending}
           >
-            {loading ? (
+            {updateTableroMutation.isPending ? (
               <ActivityIndicator color="#ffffff" />
             ) : (
               <>
@@ -288,16 +296,14 @@ const EditTableroView = ({ navigation, route }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f7fa',
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 20,
     paddingTop: 20,
-    backgroundColor: '#ffffff',
     borderBottomWidth: 1,
-    borderBottomColor: '#e8ecef',
+    position: 'relative',
   },
   backButton: {
     marginRight: 12,
@@ -305,8 +311,15 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#2c3e50',
     marginLeft: 12,
+    flex: 1,
+  },
+  themeToggle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   scrollView: {
     flex: 1,

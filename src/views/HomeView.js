@@ -10,12 +10,15 @@ import {
   Image,
   StatusBar,
   SafeAreaView,
+  TouchableOpacity,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import CandidateController from '../controllers/CandidateController';
+import { useTheme } from '../context/ThemeContext';
 
 const HomeView = () => {
+  const { theme, isDarkMode, toggleTheme } = useTheme();
   const [candidateData, setCandidateData] = useState(null);
 
   useEffect(() => {
@@ -33,69 +36,82 @@ const HomeView = () => {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" />
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
+      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
       <ScrollView 
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
         {/* Header con gradiente */}
         <LinearGradient
-          colors={['#667eea', '#764ba2']}
+          colors={isDarkMode ? ['#8c3f00', '#a14a00'] : ['#a65300ff', '#984200ff']}
           style={styles.header}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
         >
+          <TouchableOpacity 
+            style={styles.themeToggle}
+            onPress={toggleTheme}
+          >
+            <Ionicons 
+              name={isDarkMode ? 'sunny' : 'moon'} 
+              size={24} 
+              color="#ffffff" 
+            />
+          </TouchableOpacity>
           <View style={styles.avatarContainer}>
             <View style={styles.avatar}>
-              <Ionicons name="person" size={60} color="#667eea" />
+              <Ionicons name="person" size={60} color="#514100ff" />
             </View>
           </View>
           <Text style={styles.headerTitle}>Mi Perfil Profesional</Text>
         </LinearGradient>
 
-        {/* Tarjeta de información principal */}
-        <View style={styles.card}>
+        {}
+        <View style={[styles.card, { backgroundColor: theme.colors.card }]}>
           <View style={styles.infoSection}>
             <View style={styles.infoRow}>
-              <Ionicons name="person-circle-outline" size={24} color="#667eea" />
+              <Ionicons name="person-circle-outline" size={24} color={theme.colors.primary} />
               <View style={styles.infoTextContainer}>
-                <Text style={styles.infoLabel}>Nombre Completo</Text>
-                <Text style={styles.infoValue}>{candidateData.fullName}</Text>
+                <Text style={[styles.infoLabel, { color: theme.colors.textSecondary }]}>Nombre Completo</Text>
+                <Text style={[styles.infoValue, { color: theme.colors.text }]}>{candidateData.fullName}</Text>
               </View>
             </View>
 
-            <View style={styles.divider} />
+            <View style={[styles.divider, { backgroundColor: theme.colors.border }]} />
 
             <View style={styles.infoRow}>
-              <Ionicons name="mail-outline" size={24} color="#667eea" />
+              <Ionicons name="mail-outline" size={24} color={theme.colors.primary} />
               <View style={styles.infoTextContainer}>
-                <Text style={styles.infoLabel}>Correo Electrónico</Text>
-                <Text style={styles.infoValue}>{candidateData.email}</Text>
+                <Text style={[styles.infoLabel, { color: theme.colors.textSecondary }]}>Correo Electrónico</Text>
+                <Text style={[styles.infoValue, { color: theme.colors.text }]}>{candidateData.email}</Text>
               </View>
             </View>
           </View>
         </View>
 
         {/* Tarjeta de descripción profesional */}
-        <View style={styles.card}>
+        <View style={[styles.card, { backgroundColor: theme.colors.card }]}>
           <View style={styles.sectionHeader}>
-            <Ionicons name="briefcase-outline" size={24} color="#667eea" />
-            <Text style={styles.sectionTitle}>¿Por qué contratarme?</Text>
+            <Ionicons name="briefcase-outline" size={24} color={theme.colors.primary} />
+            <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>¿Por qué contratarme?</Text>
           </View>
-          <Text style={styles.description}>{candidateData.profileDescription}</Text>
+          <Text style={[styles.description, { color: theme.colors.textSecondary }]}>{candidateData.profileDescription}</Text>
         </View>
 
         {/* Tarjeta de habilidades */}
-        <View style={styles.card}>
+        <View style={[styles.card, { backgroundColor: theme.colors.card }]}>
           <View style={styles.sectionHeader}>
-            <Ionicons name="code-slash-outline" size={24} color="#667eea" />
-            <Text style={styles.sectionTitle}>Habilidades Técnicas</Text>
+            <Ionicons name="code-slash-outline" size={24} color={theme.colors.primary} />
+            <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Habilidades Técnicas</Text>
           </View>
           <View style={styles.skillsContainer}>
             {candidateData.skills.map((skill, index) => (
-              <View key={index} style={styles.skillChip}>
-                <Text style={styles.skillText}>{skill}</Text>
+              <View key={index} style={[styles.skillChip, { 
+                backgroundColor: isDarkMode ? theme.colors.cardBackground : '#edf2f7',
+                borderColor: theme.colors.border 
+              }]}>
+                <Text style={[styles.skillText, { color: theme.colors.primary }]}>{skill}</Text>
               </View>
             ))}
           </View>
@@ -103,10 +119,10 @@ const HomeView = () => {
 
         {/* Footer */}
         <View style={styles.footer}>
-          <Text style={styles.footerText}>
+          <Text style={[styles.footerText, { color: theme.colors.textSecondary }]}>
             Desarrollado con React Native & Expo
           </Text>
-          <Text style={styles.footerSubtext}>
+          <Text style={[styles.footerSubtext, { color: theme.colors.textSecondary }]}>
             Arquitectura MVC
           </Text>
         </View>
@@ -118,17 +134,14 @@ const HomeView = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f7fa',
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f5f7fa',
   },
   loadingText: {
     fontSize: 18,
-    color: '#667eea',
     fontWeight: '600',
   },
   scrollContent: {
@@ -139,6 +152,19 @@ const styles = StyleSheet.create({
     paddingBottom: 70,
     paddingHorizontal: 20,
     alignItems: 'center',
+    position: 'relative',
+  },
+  themeToggle: {
+    position: 'absolute',
+    top: 40,
+    right: 20,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10,
   },
   avatarContainer: {
     marginBottom: 15,

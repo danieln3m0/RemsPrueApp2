@@ -8,6 +8,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { useTheme } from '../context/ThemeContext';
 
 // Importar vistas
 import HomeView from '../views/HomeView';
@@ -42,6 +43,8 @@ function TablerosStack() {
 
 // Bottom Tab Navigator principal
 function AppNavigation() {
+  const { theme, isDarkMode } = useTheme();
+  
   return (
     <SafeAreaProvider>
       <NavigationContainer>
@@ -64,7 +67,7 @@ function AppNavigation() {
                 <View style={[
                   tabStyles.iconWrapper,
                   focused && tabStyles.iconWrapperFocused,
-                  { backgroundColor: focused ? 'rgba(102, 126, 234, 0.1)' : 'transparent' }
+                  { backgroundColor: focused ? (isDarkMode ? 'rgba(102, 126, 234, 0.2)' : 'rgba(102, 126, 234, 0.1)') : 'transparent' }
                 ]}>
                   <Ionicons name={iconName} size={size} color={color} />
                 </View>
@@ -74,12 +77,12 @@ function AppNavigation() {
               </View>
             );
           },
-          tabBarActiveTintColor: '#667eea',
-          tabBarInactiveTintColor: '#8492a6',
+          tabBarActiveTintColor: theme.colors.primary,
+          tabBarInactiveTintColor: theme.colors.textSecondary,
           tabBarStyle: {
-            backgroundColor: '#ffffff',
+            backgroundColor: theme.colors.card,
             borderTopWidth: 1,
-            borderTopColor: '#e8ecef',
+            borderTopColor: theme.colors.border,
             paddingBottom: 12,
             paddingTop: 8,
             height: 'auto',

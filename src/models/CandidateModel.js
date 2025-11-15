@@ -1,18 +1,22 @@
-// Model: Candidate Information
-// Contiene la información del candidato
+
 
 class CandidateModel {
   constructor() {
     this.data = {
-      fullName: "Francis Daniel Nemocón",
-      email: "francis.nemocon@example.com",
-      profileDescription: "Desarrollador Full Stack con experiencia en React Native y Expo. Apasionado por crear aplicaciones móviles eficientes y escalables. Cuento con sólidos conocimientos en arquitectura de software, patrones de diseño como MVC, y experiencia en el desarrollo de soluciones innovadoras. Mi enfoque está en escribir código limpio, mantenible y siguiendo las mejores prácticas de la industria. Busco contribuir en proyectos desafiantes donde pueda aportar valor y seguir creciendo profesionalmente.",
+      fullName: "Francis Daniel Mamani Silva",
+      email: "francisdani143@gmail.com",
+      profileDescription: "Full Stack Developer con experiencia sólida en React Native y Expo. Me especializo en crear aplicaciones móviles eficientes, escalables y con un enfoque en la experiencia del usuario. Tengo dominio de arquitecturas limpias, patrones de diseño como MVC y buenas prácticas de desarrollo. Me enfoco en producir código limpio, mantenible y orientado a resultados. Busco participar en proyectos desafiantes donde pueda aportar valor, optimizar procesos y seguir creciendo como desarrollador.",
       skills: [
         "React Native",
         "Expo",
         "JavaScript/TypeScript",
         "Arquitectura MVC",
         "Git",
+        "RESTful APIs",
+        "Diseño UI/UX",
+        "Pruebas Unitarias",
+        "Optimización de Rendimiento",
+        "Control de Versiones",
         "EAS Build"
       ]
     };
