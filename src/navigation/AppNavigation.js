@@ -2,10 +2,12 @@
 // Configura la navegación con Bottom Tabs y Stack Navigator
 
 import React from 'react';
+import { Platform, StyleSheet, View } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 // Importar vistas
 import HomeView from '../views/HomeView';
@@ -41,8 +43,9 @@ function TablerosStack() {
 // Bottom Tab Navigator principal
 function AppNavigation() {
   return (
-    <NavigationContainer>
-      <Tab.Navigator
+    <SafeAreaProvider>
+      <NavigationContainer>
+        <Tab.Navigator
         screenOptions={({ route }) => ({
           headerShown: false,
           tabBarIcon: ({ focused, color, size }) => {
@@ -56,7 +59,20 @@ function AppNavigation() {
               iconName = focused ? 'add-circle' : 'add-circle-outline';
             }
 
-            return <Ionicons name={iconName} size={size} color={color} />;
+            return (
+              <View style={tabStyles.tabIconContainer}>
+                <View style={[
+                  tabStyles.iconWrapper,
+                  focused && tabStyles.iconWrapperFocused,
+                  { backgroundColor: focused ? 'rgba(102, 126, 234, 0.1)' : 'transparent' }
+                ]}>
+                  <Ionicons name={iconName} size={size} color={color} />
+                </View>
+                {focused && (
+                  <View style={[tabStyles.dropIndicator, { backgroundColor: color }]} />
+                )}
+              </View>
+            );
           },
           tabBarActiveTintColor: '#667eea',
           tabBarInactiveTintColor: '#8492a6',
@@ -64,13 +80,18 @@ function AppNavigation() {
             backgroundColor: '#ffffff',
             borderTopWidth: 1,
             borderTopColor: '#e8ecef',
-            paddingBottom: 8,
+            paddingBottom: 12,
             paddingTop: 8,
-            height: 60,
+            height: 'auto',
+            minHeight: 70,
           },
           tabBarLabelStyle: {
             fontSize: 12,
             fontWeight: '600',
+            paddingBottom: 4,
+          },
+          tabBarItemStyle: {
+            paddingVertical: 8,
           },
         })}
       >
@@ -100,7 +121,65 @@ function AppNavigation() {
         />
       </Tab.Navigator>
     </NavigationContainer>
+    </SafeAreaProvider>
   );
 }
+
+const styles = StyleSheet.create({
+  headerButtonsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginRight: 8,
+  },
+  headerButton: {
+    marginHorizontal: 8,
+    padding: 8,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    minWidth: 40,
+    minHeight: 40,
+  },
+  flagIcon: {
+    fontSize: 26,
+  },
+});
+
+const tabStyles = StyleSheet.create({
+  tabIconContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingTop: 5,
+    position: 'relative',
+  },
+  iconWrapper: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    position: 'relative',
+  },
+  iconWrapperFocused: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  dropIndicator: {
+    position: 'absolute',
+    bottom: -10,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+});
 
 export default AppNavigation;

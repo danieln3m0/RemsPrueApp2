@@ -18,8 +18,12 @@ import TableroController from '../controllers/TableroController';
 
 const TablerosListView = ({ navigation }) => {
   const [tableros, setTableros] = useState([]);
+  const [displayedTableros, setDisplayedTableros] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [page, setPage] = useState(1);
+  const ITEMS_PER_PAGE = 10;
 
   // Cargar tableros
   const loadTableros = async () => {
@@ -28,6 +32,9 @@ const TablerosListView = ({ navigation }) => {
       
       if (result.success) {
         setTableros(result.data);
+        // Cargar primeros items
+        setDisplayedTableros(result.data.slice(0, ITEMS_PER_PAGE));
+        setPage(1);
       } else {
         Alert.alert('Error', result.error || 'No se pudieron cargar los tableros');
       }
@@ -37,6 +44,24 @@ const TablerosListView = ({ navigation }) => {
       setLoading(false);
       setRefreshing(false);
     }
+  };
+
+  // Cargar más items (infinite scroll)
+  const loadMoreTableros = () => {
+    if (loadingMore || displayedTableros.length >= tableros.length) return;
+
+    setLoadingMore(true);
+    
+    setTimeout(() => {
+      const nextPage = page + 1;
+      const startIndex = page * ITEMS_PER_PAGE;
+      const endIndex = startIndex + ITEMS_PER_PAGE;
+      const newItems = tableros.slice(startIndex, endIndex);
+      
+      setDisplayedTableros([...displayedTableros, ...newItems]);
+      setPage(nextPage);
+      setLoadingMore(false);
+    }, 500); // Pequeño delay para simular carga
   };
 
   // Cargar al montar y cuando se enfoca la pantalla
@@ -180,7 +205,7 @@ const TablerosListView = ({ navigation }) => {
         </View>
       ) : (
         <FlatList
-          data={tableros}
+          data={displayedTableros}
           renderItem={renderTablero}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.listContent}
@@ -191,6 +216,16 @@ const TablerosListView = ({ navigation }) => {
               colors={['#667eea']}
               tintColor="#667eea"
             />
+          }
+          onEndReached={loadMoreTableros}
+          onEndReachedThreshold={0.5}
+          ListFooterComponent={() => 
+            loadingMore && displayedTableros.length < tableros.length ? (
+              <View style={styles.footerLoader}>
+                <ActivityIndicator size="small" color="#667eea" />
+                <Text style={styles.footerText}>Cargando más...</Text>
+              </View>
+            ) : null
           }
         />
       )}
@@ -219,7 +254,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: 20,
-    paddingTop: 60,
+    paddingTop: 20,
     backgroundColor: '#ffffff',
     borderBottomWidth: 1,
     borderBottomColor: '#e8ecef',
@@ -363,6 +398,17 @@ const styles = StyleSheet.create({
     color: '#8492a6',
     marginTop: 8,
     textAlign: 'center',
+  },
+  footerLoader: {
+    paddingVertical: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  footerText: {
+    marginTop: 8,
+    fontSize: 14,
+    color: '#667eea',
+    fontWeight: '600',
   },
 });
 
