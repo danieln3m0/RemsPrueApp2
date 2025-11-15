@@ -81,8 +81,6 @@ export const lightTheme = {
     warning: '#ff9d42',
     cardBackground: '#fff3e7',
     shadow: 'rgba(0, 0, 0, 0.1)',
-    buttonPrimary: '#667eea',
-    buttonSecondary: '#ffffff',
   },
   dark: false,
 };
@@ -124,8 +122,6 @@ export const darkTheme = {
     warning: '#ff9d42',
     cardBackground: '#2e2e2e',
     shadow: 'rgba(0, 0, 0, 0.3)',
-    buttonPrimary: '#8b9aff',
-    buttonSecondary: '#2e2e2e',
   },
   dark: true,
 };

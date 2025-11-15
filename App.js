@@ -57,7 +57,6 @@ function SafeWrapper() {
     <SafeAreaView 
       style={{ 
         flex: 1, 
-        paddingTop: insets.top,
         paddingBottom: insets.bottom 
       }}
       edges={['top']}

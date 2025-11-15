@@ -364,18 +364,18 @@ const CreateTableroView = ({ navigation }) => {
 
         <View style={styles.actionsContainer}>
           <TouchableOpacity 
-            style={[styles.actionButton, styles.clearButton, { backgroundColor: theme.colors.buttonSecondary, borderColor: theme.colors.error }]}
+            style={[styles.actionButton, styles.clearButton, { backgroundColor: theme.colors.cardBackground, borderColor: theme.colors.border }]}
             onPress={handleClear}
             disabled={createTableroMutation.isPending}
           >
-            <Ionicons name="refresh" size={20} color={theme.colors.error} />
-            <Text style={[styles.actionButtonText, { color: theme.colors.error }]}>
+            <Ionicons name="refresh" size={20} color={theme.colors.text} />
+            <Text style={[styles.actionButtonText, { color: theme.colors.text }]}>
               Limpiar
             </Text>
           </TouchableOpacity>
 
           <TouchableOpacity 
-            style={[styles.actionButton, styles.submitButton, { backgroundColor: theme.colors.buttonPrimary }]}
+            style={[styles.actionButton, styles.submitButton, { backgroundColor: theme.colors.primary }]}
             onPress={handleSubmit}
             disabled={createTableroMutation.isPending}
           >

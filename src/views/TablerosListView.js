@@ -124,11 +124,25 @@ const TablerosListView = ({ navigation }) => {
     return filteredTableros.slice(0, page * ITEMS_PER_PAGE);
   }, [filteredTableros, page]);
   
-  /** @type {Array} Array de años únicos disponibles para filtrar */
+  /** @type {Array} Array de años únicos disponibles para filtrar con conteo */
   const availableYears = React.useMemo(() => {
     if (!tableros || tableros.length === 0) return [];
-    const years = [...new Set(tableros.map(t => t.ano_fabricacion.toString()))];
-    return years.sort((a, b) => b.localeCompare(a)); // Orden descendente
+    
+    // Contar tableros por año
+    const yearCounts = {};
+    tableros.forEach(tablero => {
+      const year = tablero.ano_fabricacion.toString();
+      yearCounts[year] = (yearCounts[year] || 0) + 1;
+    });
+    
+    // Crear array de años únicos ordenados descendentemente
+    const years = Object.keys(yearCounts).sort((a, b) => parseInt(b) - parseInt(a));
+    
+    return years.map(year => ({
+      year,
+      count: yearCounts[year],
+      label: `${year} (${yearCounts[year]} tablero${yearCounts[year] !== 1 ? 's' : ''})`
+    }));
   }, [tableros]);
   
   /** Animated.Value para controlar la animación del header */
@@ -524,7 +538,10 @@ const TablerosListView = ({ navigation }) => {
             </View>
             
             <FlatList
-              data={[{ year: null, label: 'Todos los años' }, ...availableYears.map(year => ({ year, label: year }))]}
+              data={[
+                { year: null, label: 'Todos los años', count: tableros.length }, 
+                ...availableYears
+              ]}
               keyExtractor={(item) => item.year?.toString() || 'all'}
               renderItem={({ item }) => (
                 <TouchableOpacity
