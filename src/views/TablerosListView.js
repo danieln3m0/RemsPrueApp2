@@ -208,7 +208,7 @@ const TablerosListView = ({ navigation }) => {
 
       <View style={[styles.cardActions, { borderTopColor: theme.colors.border }]}>
         <TouchableOpacity 
-          style={[styles.button, styles.editButton]}
+          style={[styles.button, styles.editButton, { backgroundColor: theme.colors.primary }]}
           onPress={() => handleEdit(item)}
         >
           <Ionicons name="pencil" size={18} color="#ffffff" />
@@ -216,7 +216,7 @@ const TablerosListView = ({ navigation }) => {
         </TouchableOpacity>
         
         <TouchableOpacity 
-          style={[styles.button, styles.deleteButton]}
+          style={[styles.button, styles.deleteButton, { backgroundColor: theme.colors.error }]}
           onPress={() => handleDelete(item)}
         >
           <Ionicons name="trash" size={18} color="#ffffff" />
@@ -451,11 +451,9 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
   },
   editButton: {
-    backgroundColor: '#667eea',
     borderBottomLeftRadius: 12,
   },
   deleteButton: {
-    backgroundColor: '#f56565',
     borderBottomRightRadius: 12,
     borderLeftWidth: 1,
     borderLeftColor: '#ffffff',
